@@ -1,0 +1,4 @@
+config.yaml
+output/*
+repos/*
+*.json
