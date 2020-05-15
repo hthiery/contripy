@@ -1,0 +1,21 @@
+projects:
+  buildroot:
+    description: "Buildroot is a simple, efficient and easy-to-use tool to generate embedded Linux systems through cross-compilation."
+    url: "https://buildroot.org/"
+    giturl: "git://git.busybox.net/buildroot"
+    gitweburl: "https://git.buildroot.net/buildroot/commit/?id=%COMMIT-ID%"
+  libssh:
+    description: "libssh is a multiplatform C library implementing the SSHv2 protocol on client and server side."
+    url: "https://www.libssh.org/"
+    giturl: "git://git.libssh.org/projects/libssh.git"
+    gitweburl: "https://git.libssh.org/projects/libssh.git/commit/?id=%COMMIT-ID%"
+  open62541:
+    description: "open62541 is an open source C (C99) implementation of OPC UA"
+    url: "https://open62541.org/"
+    giturl: "https://github.com/open62541/open62541"
+    gitweburl: "https://github.com/open62541/open62541/commit/%COMMIT-ID%"
+
+authors:
+  Heiko Thiery:
+    emails:
+      - heiko.thiery@gmail.com

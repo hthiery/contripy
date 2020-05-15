@@ -1,0 +1,163 @@
+#!/usr/bin/env python
+
+import json
+import os
+import sys
+
+import dateutil.parser
+
+
+def adoc_index(outdir, data):
+    index = os.path.join(outdir, 'index.adoc')
+    with open(index, 'w') as f:
+        f.write("""
+:doctype: book
+:toc: left
+:toclevels: 3
+:version: unrel
+:date: {docdate}
+
+= Open Source Contribution
+Heiko Thiery <heiko.thiery@gmail.com>
+{version}, {date}
+""")
+
+        f.write("""
+== Projects
+
+include::projects.adoc[leveloffset=+1]
+
+== Authors
+
+include::authors.adoc[leveloffset=+1]
+""")
+
+
+def get_authored_commit_count(data, project, author):
+    try:
+        count = len(data['authors'][author]['projects'][project]['authored'])
+    except KeyError:
+        count = 0
+    return count
+
+
+def get_others_commit_count(data, project, author):
+    try:
+        count = len(data['authors'][author]['projects'][project]['others'])
+    except KeyError:
+        count = 0
+    return count
+
+
+def commits_from_authors(project, authors):
+    for author in authors:
+        if project in authors[author]['projects']:
+            return True
+    return False
+
+
+def adoc_projects(outdir, data):
+    projects_adoc = os.path.join(outdir, 'projects.adoc')
+
+    with open(projects_adoc, 'w') as f:
+        for project in sorted(data['projects']):
+
+            # first check if there are any commits or contributions from author
+            if commits_from_authors(project, data['authors']) is False:
+                continue
+
+            project_name_with_link = '{}[{}]'.format(data['projects'][project]['url'], project)
+            f.write('== {}\n'.format(project_name_with_link))
+
+            f.write('{}\n\n'.format(data['projects'][project]['description']))
+
+            # list all authors that contributed in that project
+            f.write('[cols="4,1,1", options="header"]\n')
+            f.write('|===\n')
+            f.write('| Author| Commit(s) | Other(s)\n')
+            for author in data['authors']:
+                if project in  data['authors'][author]['projects']:
+                    count = get_authored_commit_count(data, project, author)
+                    others = get_others_commit_count(data, project, author)
+                    name = data['authors'][author]['name']
+
+                    anchor_commits = '{}-{}-authored'.format(name.replace(' ', ''), project)
+                    anchor_others = '{}-{}-others'.format(name.replace(' ', ''), project)
+                    f.write('| {}| <<{},{}>>| <<{},{}>>\n'.format(
+                        name,
+                        anchor_commits, count,
+                        anchor_others, others
+                        ))
+            f.write('|===\n')
+
+
+def adoc_authors(outdir, data):
+    authors_adoc= os.path.join(outdir, 'authors.adoc')
+
+    with open(authors_adoc, 'w') as f:
+        for author in sorted(data['authors']):
+            adoc_author(f, data['authors'][author])
+
+
+def adoc_author(f, author):
+
+    if len(author['projects']) == 0:
+        return
+
+    f.write('== {}\n'.format(author['name']))
+    f.write('\n')
+
+    for project in sorted(author['projects']):
+        f.write('=== {}\n'.format(project))
+
+        if 'authored' in author['projects'][project]:
+            anchor = '{}-{}-{}'.format(author['name'].replace(' ', ''), project, 'authored')
+            f.write('==== {}[[{}]]\n'.format('Commits', anchor))
+            f.write('[cols="1,1,5", options="header"]\n')
+            f.write('|===\n')
+            f.write('| Commit | Date | Subject\n')
+
+            for commit in author['projects'][project]['authored']:
+                date = dateutil.parser.isoparse(commit['date']).strftime('%Y-%m-%d')
+                commit_with_link = '{}[{}]..'.format(commit['link'], commit['id'][:10])
+                subject = commit['subject'].replace('|','\|')
+
+                f.write('|{} | {}  | {}\n'.format(commit_with_link, date, subject))
+            f.write('|===\n')
+            f.write('\n')
+
+        if 'others' in author['projects'][project]:
+            anchor = '{}-{}-{}'.format(author['name'].replace(' ', ''), project, 'others')
+            f.write('==== {}[[{}]]\n'.format('Others', anchor))
+            f.write('[cols="1,1,5", options="header"]\n')
+            f.write('|===\n')
+            f.write('| Commit | Date | Subject\n')
+
+            for commit in author['projects'][project]['others']:
+                date = dateutil.parser.isoparse(commit['date']).strftime('%Y-%m-%d')
+                commit_with_link = '{}[{}]..'.format(commit['link'], commit['id'][:10])
+                subject = commit['subject'].replace('|','\|')
+
+                f.write('|{} | {}  | {}\n'.format(commit_with_link, date, subject))
+            f.write('|===\n')
+            f.write('\n')
+
+
+def main(argv):
+    if len(argv) < 3:
+        print('{} <JSON> <OUTFILE>'.format(argv[0]))
+        sys.exit(1)
+
+    reportfile= argv[1]
+    outdir = argv[2]
+
+    with open(reportfile) as json_file:
+        data = json.load(json_file)
+
+    adoc_index(outdir, data)
+    adoc_projects(outdir, data)
+    adoc_authors(outdir, data)
+
+
+if __name__ == '__main__':
+    main(sys.argv)

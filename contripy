@@ -1,0 +1,258 @@
+#!/usr/bin/env python
+
+import argparse
+import json
+import os
+import subprocess
+import sys
+import yaml
+
+from datetime import datetime
+
+REPOS_DIR = 'repos'
+
+
+class Project(object):
+    def __init__(self, name, cfg):
+        self.name = name
+        self.url = cfg['url']
+        self.giturl = cfg['giturl']
+        self.gitweburl = cfg['gitweburl']
+        self.description = cfg['description']
+
+        if 'branch' in cfg:
+            self.branch = cfg['branch']
+        else:
+            self.branch = 'master'
+
+
+class Author(object):
+    def __init__(self, name, emails):
+        self.name = name
+        self.emails = emails
+        self.projects = {}
+
+    def add_authored_contributions(self, project, commits):
+        """Add authored commits."""
+        commits = sorted(commits, key=lambda k: k['date'], reverse=True)
+        if project not in self.projects:
+            self.projects[project] = {}
+        self.projects[project]['authored'] = commits
+
+    def add_other_contributions(self, project, commits):
+        """Add other contributions."""
+        commits = sorted(commits, key=lambda k: k['date'], reverse=True)
+        if project not in self.projects:
+            self.projects[project] = {}
+        self.projects[project]['others'] = commits
+
+
+def read_config(filename):
+    data = None
+    with open(filename) as f:
+        data = yaml.load(f)
+    return data
+
+
+def create_repos_dir():
+    if not os.path.exists(REPOS_DIR):
+        os.makedirs(REPOS_DIR)
+
+def _get_commit_from_line(line):
+    commit = {}
+    values = line.split('##')
+    for value in values:
+        s = value.split('=')
+        commit[s[0]] = s[1]
+    return commit
+
+def get_other_contributions(project, author, args, repodir):
+    commits = list()
+
+    cmd = [
+         'git',
+         'log',
+         '--after={}'.format(args.period_start),
+         '--until={}'.format(args.period_end),
+         '--pretty=format:id=%H##date=%aI##author=%an##email=%ae##subject=%s',
+         '--regexp-ignore-case',
+         ]
+
+    # The contribution type. Don't care about lower/upper case.
+    # case is ignored (-i/--regexp-ignore-case option)
+    contributions = [
+        "reported-by",
+        "tested-by",
+        "suggested-by",
+        "reviewed-by",
+        "co-developed-by",
+        "acked-by"
+    ]
+    for c in contributions:
+        cmd.append('--grep')
+        cmd.append('{}:.*{}'.format(c, author.name))
+
+    output = subprocess.check_output(cmd, cwd=repodir)
+    for line in output.splitlines():
+        try:
+            commit = _get_commit_from_line(line)
+            commits.append(commit)
+
+        except ValueError:
+            print('ignore', line)
+
+    for commit in commits:
+        commit['link'] = project.gitweburl.replace('%COMMIT-ID%', commit['id'])
+
+    return commits
+
+
+def get_authored_contributions(project, author, args, repodir):
+    commits = list()
+
+    cmd = [
+         'git',
+         'log',
+         '--pretty=format:id=%H##date=%aI##author=%an##email=%ae##subject=%s',
+         '--after={}'.format(args.period_start),
+         '--until={}'.format(args.period_end),
+         '--author={}'.format(author.name),
+         ]
+    output = subprocess.check_output(cmd, cwd=repodir)
+    for line in output.splitlines():
+        try:
+            commit = _get_commit_from_line(line)
+            if commit['email'] not in author.emails:
+                continue
+            commits.append(commit)
+        except ValueError:
+            print('ignore', line)
+
+    for commit in commits:
+        commit['link'] = project.gitweburl.replace('%COMMIT-ID%', commit['id'])
+
+    return commits
+
+
+def get_project(project, repos_dir):
+    create_repos_dir()
+    repodir = os.path.join(REPOS_DIR, project.name)
+    print(repodir)
+
+    try:
+        cmd = [
+             'git',
+             'clone',
+             project.giturl,
+             project.name
+             ]
+        o = subprocess.check_output(cmd, cwd=REPOS_DIR)
+    except subprocess.CalledProcessError:
+        # assume we already cloned and now we can fetch/pull
+        cmd = [
+             'git',
+             'pull'
+             ]
+        o = subprocess.check_output(cmd, cwd=repodir)
+
+#    try:
+#        cmd = [
+#             'git',
+#             'checkout',
+#             '{}'.format(project.branch)
+#             ]
+#        o = subprocess.check_output(cmd, cwd=project_repo_dir)
+#    except subprocess.CalledProcessError:
+#        print('cannot switch to branch "{}"'.format(project.branch))
+#        sys.exit(1)
+
+    return repodir
+
+
+def dump_json(outfile, authors, projects, args):
+    a = {
+        author.name: {
+            k: v
+            for k, v in author.__dict__.items()
+        } for author in authors
+    }
+
+    p = {
+        project.name: {
+            k: v
+            for k, v in project.__dict__.items()
+        } for project in projects
+    }
+
+    final = {
+        'period': {'start': args.period_start, 'end': args.period_end},
+        'authors': a,
+        'projects': p
+    }
+
+    with open(outfile, 'w') as f:
+        json.dump(final, f, indent=2, separators=(',', ': '))
+        f.write('\n')
+
+
+def parse_args():
+    start = datetime.now().replace(year=datetime.now().year-1)
+
+    parser = argparse.ArgumentParser(description='Contribution reporter.')
+    parser.add_argument('--from', dest='period_start', help='Period start',
+                        default=start.strftime('%Y-%m-%d'))
+    parser.add_argument('--to', dest='period_end', help='Period end',
+                        default=datetime.now().strftime('%Y-%m-%d'))
+    parser.add_argument('-p', '--project', dest='project', nargs='*',
+                        help='project(s)')
+    parser.add_argument('-c', '--config', dest='cfgfile', metavar='CFG',
+                        type=str, help='config file', required=True)
+    parser.add_argument('-o', '--out', dest='outfile', metavar='OUT',
+                        type=str, help='output file', required=True)
+    args = parser.parse_args()
+
+    return args
+
+
+def main():
+    authors = list()
+    projects = list()
+
+    args = parse_args()
+
+    try:
+        cfg = read_config(args.cfgfile)
+    except:
+        print('ERROR: parsing config')
+        sys.exit(1)
+
+    for name in cfg['authors']:
+        authors.append(Author(name, cfg['authors'][name]['emails']))
+
+    for name in cfg['projects']:
+        projects.append(Project(name, cfg['projects'][name]))
+
+    for project in projects:
+        if args.project and project.name not in args.project:
+            continue
+        print('Checking project {}'.format(project.name))
+        repodir = get_project(project , REPOS_DIR)
+        for author in authors:
+            commits = get_authored_contributions(project, author, args, repodir)
+            if commits:
+                author.add_authored_contributions(project.name, commits)
+
+            others = get_other_contributions(project, author, args, repodir)
+            if others:
+                author.add_other_contributions(project.name, others)
+
+            print(' Author: {} {}/{}'.format(author.name,
+                                             len(commits),
+                                             len(others)))
+
+    dump_json(args.outfile, authors, projects, args)
+
+
+if __name__ == '__main__':
+
+    main()
