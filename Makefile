@@ -9,7 +9,7 @@ $(o)outfile.json: config.yaml
 
 $(o)index.adoc: $(o)outfile.json
 	mkdir -p $(o)
-	./report $< $(o)
+	./report -i $< -d $(o) -o $(notdir $@)
 
 $(o)index.html: $(o)index.adoc
 	asciidoctor $(o)index.adoc
