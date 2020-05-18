@@ -169,7 +169,7 @@ def get_project(project, repos_dir):
     return repodir
 
 
-def dump_json(outfile, authors, projects, args):
+def dump_json(outfile, authors, projects, cfg, args):
     a = {
         author.name: {
             k: v
@@ -184,10 +184,20 @@ def dump_json(outfile, authors, projects, args):
         } for project in projects
     }
 
+    d = {
+        'title': 'Open Source Contribution',
+        'author': 'Heiko Thiery',
+        'email': 'heiko.thiery@kontron.com',
+    }
+
     final = {
-        'period': {'start': args.period_start, 'end': args.period_end},
+        'period': {
+            'start': args.period_start,
+            'end': args.period_end
+        },
         'authors': a,
-        'projects': p
+        'projects': p,
+        'document': d
     }
 
     with open(outfile, 'w') as f:
@@ -250,7 +260,7 @@ def main():
                                              len(commits),
                                              len(others)))
 
-    dump_json(args.outfile, authors, projects, args)
+    dump_json(args.outfile, authors, projects, cfg, args)
 
 
 if __name__ == '__main__':
