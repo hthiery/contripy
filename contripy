@@ -90,8 +90,9 @@ def get_other_contributions(project, author, args, repodir):
         "acked-by"
     ]
     for c in contributions:
-        cmd.append('--grep')
-        cmd.append('{}:.*{}'.format(c, author.name))
+        for email in author.emails:
+            cmd.append('--grep')
+            cmd.append('{}:.*{}'.format(c, email))
 
     output = subprocess.check_output(cmd, cwd=repodir)
     for line in output.splitlines():
