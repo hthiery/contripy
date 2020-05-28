@@ -81,6 +81,7 @@ def get_other_contributions(project, author, args, repodir):
     # The contribution type. Don't care about lower/upper case.
     # case is ignored (-i/--regexp-ignore-case option)
     contributions = [
+        "signed-off-by",
         "reported-by",
         "tested-by",
         "suggested-by",
@@ -96,6 +97,11 @@ def get_other_contributions(project, author, args, repodir):
     for line in output.splitlines():
         try:
             commit = _get_commit_from_line(line)
+
+            # skip if author of commit is same as user (author)
+            if commit['email'] in author.emails:
+                continue
+
             commits.append(commit)
 
         except ValueError:
