@@ -25,7 +25,10 @@ def adoc_index(outdir, outfile, data):
 
 """)
 
-        f.write('= {}\n'.format(data['document']['title']))
+        f.write('= {}: {} - {}\n'.format(
+                    data['document']['title'],
+                    data['period']['start'],
+                    data['period']['end']))
         f.write('{} {}\n'.format(
                 data['document']['author'],
                 data['document']['email']))
