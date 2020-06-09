@@ -1,21 +1,22 @@
 O ?= output
 o := $(O)/
 
-all: $(o)index.html $(o)index.pdf
+all: $(o)contribution.html $(o)contribution.pdf
 
 
+.PHONY: $(o)outfile.json
 $(o)outfile.json: config.yaml
-	./contripy -c config.yaml -o $@
+	./contripy --from 2010-01-01 -c config.yaml -o $@
 
 $(o)index.adoc: $(o)outfile.json
 	mkdir -p $(o)
 	./report -i $< -d $(o) -o $(notdir $@)
 
-$(o)index.html: $(o)index.adoc
-	asciidoctor $(o)index.adoc
+$(o)contribution.html: $(o)index.adoc
+	asciidoctor $< -o $@
 
-$(o)index.pdf: $(o)index.adoc
-	asciidoctor-pdf $(o)index.adoc
+$(o)contribution.pdf: $(o)index.adoc
+	asciidoctor-pdf $< -o $@
 
 clean:
 	rm -f $(o)index.pdf
