@@ -5,8 +5,8 @@ all: $(o)contribution.html $(o)contribution.pdf
 
 
 .PHONY: $(o)outfile.json
-$(o)outfile.json: config.yaml
-	./contripy --from 2010-01-01 -c config.yaml -o $@
+$(o)outfile.json: contripy.cfg
+	./contripy --from 2010-01-01 -c contripy.cfg -o $@
 
 $(o)index.adoc: $(o)outfile.json
 	mkdir -p $(o)
