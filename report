@@ -22,6 +22,7 @@ def adoc_index(outdir, outfile, data):
 :toclevels: 3
 :version: unrel
 :date: {docdate}
+:title-logo-image: logo.png
 
 """)
 
