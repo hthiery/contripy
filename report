@@ -14,7 +14,7 @@ def create_outdir_dir(outdir):
 
 
 def adoc_index(outdir, outfile, data):
-    index = os.path.join(outdir, outfile)
+    index = os.path.join(outdir, 'index.adoc')
     with open(index, 'w') as f:
         f.write("""
 :doctype: book
@@ -120,6 +120,22 @@ def adoc_author(f, author):
     f.write('== {}\n'.format(author['name']))
     f.write('\n')
 
+    f.write('[cols="1,1,5", options="header"]\n')
+    f.write('|===\n')
+    f.write('| Project | Commit(s) | Other(s)\n')
+    # table overview of projects
+    for project in sorted(author['projects']):
+        authored = 0
+        others = 0
+        if 'authored' in author['projects'][project]:
+            authored = len(author['projects'][project]['authored'])
+        if 'others' in author['projects'][project]:
+            others = len(author['projects'][project]['others'])
+        f.write('| {}| {} | {}\n'.format(project, authored, others))
+    f.write('|===\n')
+    f.write('\n')
+
+    # detailed projects
     for project in sorted(author['projects']):
         f.write('=== {}\n'.format(project))
 
