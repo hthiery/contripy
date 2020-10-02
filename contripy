@@ -19,6 +19,15 @@ class Project(object):
         self.giturl = cfg['giturl']
         self.gitweburl = cfg['gitweburl']
         self.description = cfg['description']
+        if 'skip-users' in cfg:
+            self.skip_users = cfg['skip-users']
+        else:
+            self.skip_users = None
+
+        if 'only-users' in cfg:
+            self.only_users = cfg['only-users']
+        else:
+            self.only_users = None
 
         if 'branch' in cfg:
             self.branch = cfg['branch']
@@ -255,6 +264,13 @@ def main():
         print('Checking project {}'.format(project.name))
         repodir = get_project(project , REPOS_DIR)
         for author in authors:
+            print(' Author: {} .. '.format(author.name), end='', flush=True)
+            if project.only_users and not author.name in project.only_users:
+                print('skip')
+                continue
+            if project.skip_users and author.name in project.skip_users:
+                print('skip')
+                continue
             commits = get_authored_contributions(project, author, args, repodir)
             if commits:
                 author.add_authored_contributions(project.name, commits)
@@ -263,9 +279,7 @@ def main():
             if others:
                 author.add_other_contributions(project.name, others)
 
-            print(' Author: {} {}/{}'.format(author.name,
-                                             len(commits),
-                                             len(others)))
+            print('{}/{}'.format(len(commits), len(others)))
 
     dump_json(args.outfile, authors, projects, cfg, args)
 
