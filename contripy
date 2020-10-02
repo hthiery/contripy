@@ -60,7 +60,7 @@ def create_repos_dir():
 
 def _get_commit_from_line(line):
     commit = {}
-    values = line.split('##')
+    values = line.decode().split('##')
     for value in values:
         s = value.split('=')
         commit[s[0]] = s[1]
@@ -76,7 +76,7 @@ def get_other_contributions(project, author, args, repodir):
          '--until={}'.format(args.period_end),
          '--pretty=format:id=%H##date=%aI##author=%an##email=%ae##subject=%s',
          '--regexp-ignore-case',
-         ]
+    ]
 
     # The contribution type. Don't care about lower/upper case.
     # case is ignored (-i/--regexp-ignore-case option)
