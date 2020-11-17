@@ -218,7 +218,7 @@ def dump_json(outfile, authors, projects, cfg, args):
 
     # create folder
     out_path = os.path.dirname(outfile)
-    if not os.path.exists(out_path):
+    if out_path and not os.path.exists(out_path):
         os.makedirs(out_path)
 
     with open(outfile, 'w') as f:
