@@ -7,7 +7,9 @@ generates a report with asciidoctor.
 
 * git
 * asciidoctor
-* asciidoctor-pdf
+* ruby-asciidoctor-pdf
+* python3-yaml
+* python3-dateutil
 
 
 ## config
