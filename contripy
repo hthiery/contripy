@@ -81,9 +81,10 @@ def get_other_contributions(project, author, args, repodir):
     cmd = [
          'git',
          'log',
+         '--date=short',
          '--after={}'.format(args.period_start),
          '--until={}'.format(args.period_end),
-         '--pretty=format:id=%H##date=%aI##author=%an##email=%ae##subject=%s',
+         '--pretty=format:id=%H##date=%ad##author=%an##email=%ae##subject=%s',
          '--regexp-ignore-case',
     ]
 
@@ -129,7 +130,8 @@ def get_authored_contributions(project, author, args, repodir):
     cmd = [
          'git',
          'log',
-         '--pretty=format:id=%H##date=%aI##author=%an##email=%ae##subject=%s',
+         '--date=short',
+         '--pretty=format:id=%H##date=%ad##author=%an##email=%ae##subject=%s',
          '--after={}'.format(args.period_start),
          '--until={}'.format(args.period_end),
          '--author={}'.format(author.name),

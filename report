@@ -147,7 +147,7 @@ def adoc_author(f, author):
             f.write('| Commit | Date | Subject\n')
 
             for commit in author['projects'][project]['authored']:
-                date = dateutil.parser.isoparse(commit['date']).strftime('%Y-%m-%d')
+                date = commit['date']
                 commit_with_link = '{}[{}]..'.format(commit['link'], commit['id'][:10])
                 subject = commit['subject'].replace('|','\|')
 
@@ -163,7 +163,7 @@ def adoc_author(f, author):
             f.write('| Commit | Date | Subject\n')
 
             for commit in author['projects'][project]['others']:
-                date = dateutil.parser.isoparse(commit['date']).strftime('%Y-%m-%d')
+                date = commit['date']
                 commit_with_link = '{}[{}]..'.format(commit['link'], commit['id'][:10])
                 subject = commit['subject'].replace('|','\|')
 
