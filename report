@@ -13,7 +13,7 @@ def create_outdir_dir(outdir):
         os.makedirs(outdir)
 
 
-def adoc_index(outdir, outfile, data):
+def adoc_index(outdir, data):
     index = os.path.join(outdir, 'index.adoc')
     with open(index, 'w') as f:
         f.write("""
@@ -193,8 +193,6 @@ def parse_args():
                         type=str, help='JSON input', required=True)
     parser.add_argument('-d', '--outdir', dest='outdir', metavar='OUTDIR',
                         type=str, help='JSON report', required=True)
-    parser.add_argument('-o', '--outfile', dest='outfile', metavar='OUTFILE',
-                        type=str, help='output file', required=True)
     args = parser.parse_args()
 
     return args
@@ -210,9 +208,10 @@ def main():
 
     settings = document_settings(data)
 
-    adoc_index(args.outdir, args.outfile, data)
+    adoc_index(args.outdir, data)
     adoc_projects(args.outdir, data)
     adoc_authors(args.outdir, data)
+#    adoc_history(args.outdir, data)
 
 
 if __name__ == '__main__':
