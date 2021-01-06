@@ -41,19 +41,19 @@ class Author(object):
         self.emails = cfg['emails']
         self.projects = {}
 
-    def add_authored_contributions(self, project, commits):
-        """Add authored commits."""
+    def _add_contributions(self, project, commits, contribution):
         commits = sorted(commits, key=lambda k: k['date'], reverse=True)
         if project not in self.projects:
             self.projects[project] = {}
-        self.projects[project]['authored'] = commits
+        self.projects[project][contribution] = commits
+
+    def add_authored_contributions(self, project, commits):
+        """Add authored commits."""
+        self._add_contributions(project, commits, 'authored')
 
     def add_other_contributions(self, project, commits):
         """Add other contributions."""
-        commits = sorted(commits, key=lambda k: k['date'], reverse=True)
-        if project not in self.projects:
-            self.projects[project] = {}
-        self.projects[project]['others'] = commits
+        self._add_contributions(project, commits, 'others')
 
 
 def read_config(filename):
