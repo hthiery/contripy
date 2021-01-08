@@ -110,6 +110,7 @@ def adoc_authors(outdir, data):
     with open(authors_adoc, 'w') as f:
         for author in sorted(data['authors']):
             adoc_author(f, data['authors'][author])
+            f.write('<<<\n')
 
 
 def adoc_author(f, author):
