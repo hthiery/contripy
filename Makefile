@@ -13,7 +13,7 @@ $(o)logo.png: images/contripy_logo.png
 
 $(o)index.adoc: $(o)outfile.json $(o)logo.png
 	mkdir -p $(o)
-	./report -i $< -d $(o) -o $(notdir $@)
+	./report -i $< -d $(o)
 
 $(o)contribution.html: $(o)index.adoc
 	asciidoctor $< -o $@
