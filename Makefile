@@ -4,7 +4,7 @@ o := $(O)/
 all: $(o)contribution.html $(o)contribution.pdf
 
 
-.PHONY: $(o)outfile.json
+#.PHONY: $(o)outfile.json
 $(o)outfile.json: contripy.cfg
 	./contripy --from 2010-01-01 -c contripy.cfg -o $@
 
@@ -22,5 +22,7 @@ $(o)contribution.pdf: $(o)index.adoc
 	asciidoctor-pdf $< -o $@
 
 clean:
+	rm -f $(o)outfile.json
+	rm -f $(o)*.adoc
 	rm -f $(o)index.pdf
 	rm -f $(o)index.html
