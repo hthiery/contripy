@@ -255,7 +255,8 @@ def main():
 
     try:
         cfg = read_config(args.cfgfile)
-    except:
+    except yaml.YAMLError as exc:
+        print(exc)
         print('ERROR: parsing config')
         sys.exit(1)
 
