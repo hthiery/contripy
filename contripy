@@ -21,6 +21,12 @@ class Project(object):
         self.giturl = cfg['giturl']
         self.gitweburl = cfg['gitweburl']
         self.description = cfg['description']
+
+        if 'parser' in cfg:
+            self.parser = cfg['parser']
+        else:
+            self.parser = 'git'
+
         if 'skip-users' in cfg:
             self.skip_users = cfg['skip-users']
         else:
@@ -281,7 +287,13 @@ def main():
         if args.project and project.name not in args.project:
             continue
         print('Checking project {}'.format(project.name))
-        parser = GitContributionParser(project, args)
+
+        if project.parser == "git":
+            parser = GitContributionParser(project, args)
+        else:
+            print(f"Invalid parser { project.parser }")
+            sys.exit(1)
+
         for author in authors:
             print(' Author: {} .. '.format(author.name), end='', flush=True)
             if project.only_users and not author.name in project.only_users:
