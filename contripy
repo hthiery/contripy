@@ -21,7 +21,11 @@ class Project(object):
         self.url = cfg['url']
         self.giturl = cfg['giturl']
         self.gitweburl = cfg['gitweburl']
-        self.description = cfg['description']
+
+        if 'description' in cfg:
+            self.description = cfg['description']
+        else:
+            self.description = None
 
         if 'parser' in cfg:
             self.parser = cfg['parser']
