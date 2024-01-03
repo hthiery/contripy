@@ -83,6 +83,9 @@ class ContributionParser:
     def get_authored_contributions(self, author):
         return []
 
+    def update_project(self):
+        pass
+
     def create_commit_link(self, commit):
         commit['link'] = self.project.gitweburl.replace('%COMMIT-ID%', commit['id'])
 
@@ -377,6 +380,8 @@ def main():
         else:
             print(f"Invalid parser { project.parser }")
             sys.exit(1)
+
+        parser.update_project()
 
         for author in authors:
             print(' Author: {} .. '.format(author.name), end='', flush=True)
