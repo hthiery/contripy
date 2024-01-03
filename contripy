@@ -293,6 +293,28 @@ class GitHubContributionParser(ContributionParser):
 
         return commits
 
+    def update_project(self):
+        query = f"""
+        query {{
+            repository(
+                name: "{ self.project.repo['name'] }"
+                owner: "{ self.project.repo['owner'] }"
+            ) {{
+                description
+            }}
+        }}
+        """
+
+        data = self.client.execute(
+            query=query,
+            headers={"Authorization": "Bearer {}".format(self.token)},
+        )
+
+        project = data["data"]["repository"]
+
+        if not self.project.description:
+            self.project.description = project['description']
+
 def dump_json(outfile, authors, projects, cfg, args):
     a = {
         author.name: {
