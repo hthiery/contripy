@@ -8,6 +8,8 @@ import sys
 import yaml
 
 from datetime import datetime
+from dotenv import load_dotenv
+from envyaml import EnvYAML
 
 REPOS_DIR = 'repos'
 
@@ -54,14 +56,6 @@ class Author(object):
     def add_other_contributions(self, project, commits):
         """Add other contributions."""
         self._add_contributions(project, commits, 'others')
-
-
-def read_config(filename):
-    data = None
-    with open(filename) as f:
-        data = yaml.full_load(f)
-    return data
-
 
 def create_repos_dir():
     if not os.path.exists(REPOS_DIR):
@@ -242,13 +236,14 @@ def parse_args():
 
 
 def main():
+    load_dotenv()
     authors = list()
     projects = list()
 
     args = parse_args()
 
     try:
-        cfg = read_config(args.cfgfile)
+        cfg = EnvYAML(args.cfgfile)
     except yaml.YAMLError as exc:
         print(exc)
         print('ERROR: parsing config')
