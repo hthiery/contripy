@@ -57,129 +57,143 @@ class Author(object):
         """Add other contributions."""
         self._add_contributions(project, commits, 'others')
 
-def create_repos_dir():
-    if not os.path.exists(REPOS_DIR):
-        os.makedirs(REPOS_DIR)
+class ContributionParser:
+    def __init__(self, project, args):
+        self.project = project
+        self.args = args
 
-def _get_commit_from_line(line):
-    commit = {}
-    values = line.decode().split('##')
-    for value in values:
-        s = value.split('=')
-        commit[s[0]] = s[1]
-    return commit
+    def get_other_contributions(self, author):
+        return []
 
-def get_other_contributions(project, author, args, repodir):
-    commits = list()
+    def get_authored_contributions(self, author):
+        return []
 
-    cmd = [
-         'git',
-         'log',
-         '--date=short',
-         '--after={}'.format(args.period_start),
-         '--until={}'.format(args.period_end),
-         '--pretty=format:id=%H##date=%ad##author=%an##email=%ae##subject=%s',
-         '--regexp-ignore-case',
-    ]
+    def create_commit_link(self, commit):
+        commit['link'] = self.project.gitweburl.replace('%COMMIT-ID%', commit['id'])
 
-    # The contribution type. Don't care about lower/upper case.
-    # case is ignored (-i/--regexp-ignore-case option)
-    contributions = [
-        "signed-off-by",
-        "reported-by",
-        "tested-by",
-        "suggested-by",
-        "reviewed-by",
-        "co-developed-by",
-        "acked-by"
-    ]
-    for c in contributions:
-        for email in author.emails:
-            cmd.append('--grep')
-            cmd.append('{}:.*{}'.format(c, email))
+class GitContributionParser(ContributionParser):
+    def __init__(self, project, args):
+        super().__init__(project, args)
+        self._get_repo(REPOS_DIR)
 
-    output = subprocess.check_output(cmd, cwd=repodir)
-    for line in output.splitlines():
-        try:
-            commit = _get_commit_from_line(line)
+    def get_other_contributions(self, author):
+        commits = list()
 
-            # skip if author of commit is same as user (author)
-            if commit['email'] in author.emails:
-                continue
-
-            commits.append(commit)
-
-        except ValueError:
-            print('ignore', line)
-
-    for commit in commits:
-        commit['link'] = project.gitweburl.replace('%COMMIT-ID%', commit['id'])
-
-    return commits
-
-
-def get_authored_contributions(project, author, args, repodir):
-    commits = list()
-
-    cmd = [
-         'git',
-         'log',
-         '--date=short',
-         '--pretty=format:id=%H##date=%ad##author=%an##email=%ae##subject=%s',
-         '--after={}'.format(args.period_start),
-         '--until={}'.format(args.period_end),
-         '--author={}'.format(author.name),
-         ]
-    output = subprocess.check_output(cmd, cwd=repodir)
-    for line in output.splitlines():
-        try:
-            commit = _get_commit_from_line(line)
-            if commit['email'].lower() not in [a.lower() for a in author.emails]:
-                continue
-            commits.append(commit)
-        except ValueError:
-            print('ignore', line)
-
-    for commit in commits:
-        commit['link'] = project.gitweburl.replace('%COMMIT-ID%', commit['id'])
-
-    return commits
-
-
-def get_project(project, repos_dir):
-    create_repos_dir()
-    repodir = os.path.join(REPOS_DIR, project.name)
-    print(repodir)
-
-    try:
         cmd = [
-             'git',
-             'clone',
-             project.giturl,
-             project.name
-             ]
-        o = subprocess.check_output(cmd, cwd=REPOS_DIR)
-    except subprocess.CalledProcessError:
-        # assume we already cloned and now we can fetch/pull
+            'git',
+            'log',
+            '--date=short',
+            '--after={}'.format(self.args.period_start),
+            '--until={}'.format(self.args.period_end),
+            '--pretty=format:id=%H##date=%ad##author=%an##email=%ae##subject=%s',
+            '--regexp-ignore-case',
+        ]
+
+        # The contribution type. Don't care about lower/upper case.
+        # case is ignored (-i/--regexp-ignore-case option)
+        contributions = [
+            "signed-off-by",
+            "reported-by",
+            "tested-by",
+            "suggested-by",
+            "reviewed-by",
+            "co-developed-by",
+            "acked-by"
+        ]
+        for c in contributions:
+            for email in author.emails:
+                cmd.append('--grep')
+                cmd.append('{}:.*{}'.format(c, email))
+
+        output = subprocess.check_output(cmd, cwd=self.repodir)
+        for line in output.splitlines():
+            try:
+                commit = self._get_commit_from_line(line)
+
+                # skip if author of commit is same as user (author)
+                if commit['email'] in author.emails:
+                    continue
+
+                commits.append(commit)
+
+            except ValueError:
+                print('ignore', line)
+
+        for commit in commits:
+            self.create_commit_link(commit)
+
+        return commits
+
+    def get_authored_contributions(self, author):
+        commits = list()
+
         cmd = [
-             'git',
-             'pull'
-             ]
-        o = subprocess.check_output(cmd, cwd=repodir)
+            'git',
+            'log',
+            '--date=short',
+            '--pretty=format:id=%H##date=%ad##author=%an##email=%ae##subject=%s',
+            '--after={}'.format(self.args.period_start),
+            '--until={}'.format(self.args.period_end),
+            '--author={}'.format(author.name),
+            ]
+        output = subprocess.check_output(cmd, cwd=self.repodir)
+        for line in output.splitlines():
+            try:
+                commit = self._get_commit_from_line(line)
+                if commit['email'].lower() not in [a.lower() for a in author.emails]:
+                    continue
+                commits.append(commit)
+            except ValueError:
+                print('ignore', line)
 
-#    try:
-#        cmd = [
-#             'git',
-#             'checkout',
-#             '{}'.format(project.branch)
-#             ]
-#        o = subprocess.check_output(cmd, cwd=project_repo_dir)
-#    except subprocess.CalledProcessError:
-#        print('cannot switch to branch "{}"'.format(project.branch))
-#        sys.exit(1)
+        for commit in commits:
+            self.create_commit_link(commit)
 
-    return repodir
+        return commits
 
+    def _create_repos_dir(self):
+        if not os.path.exists(REPOS_DIR):
+            os.makedirs(REPOS_DIR)
+
+    def _get_repo(self, repos_dir):
+        self._create_repos_dir()
+        self.repodir = os.path.join(REPOS_DIR, self.project.name)
+        print(self.repodir)
+
+        try:
+            cmd = [
+                'git',
+                'clone',
+                self.project.giturl,
+                self.project.name
+                ]
+            o = subprocess.check_output(cmd, cwd=REPOS_DIR)
+        except subprocess.CalledProcessError:
+            # assume we already cloned and now we can fetch/pull
+            cmd = [
+                'git',
+                'pull'
+                ]
+            o = subprocess.check_output(cmd, cwd=self.repodir)
+
+    #    try:
+    #        cmd = [
+    #             'git',
+    #             'checkout',
+    #             '{}'.format(project.branch)
+    #             ]
+    #        o = subprocess.check_output(cmd, cwd=project_repo_dir)
+    #    except subprocess.CalledProcessError:
+    #        print('cannot switch to branch "{}"'.format(project.branch))
+    #        sys.exit(1)
+
+    def _get_commit_from_line(self, line):
+        commit = {}
+        values = line.decode().split('##')
+        for value in values:
+            s = value.split('=')
+            commit[s[0]] = s[1]
+        return commit
 
 def dump_json(outfile, authors, projects, cfg, args):
     a = {
@@ -259,7 +273,7 @@ def main():
         if args.project and project.name not in args.project:
             continue
         print('Checking project {}'.format(project.name))
-        repodir = get_project(project , REPOS_DIR)
+        parser = GitContributionParser(project, args)
         for author in authors:
             print(' Author: {} .. '.format(author.name), end='', flush=True)
             if project.only_users and not author.name in project.only_users:
@@ -268,11 +282,11 @@ def main():
             if project.skip_users and author.name in project.skip_users:
                 print('skip')
                 continue
-            commits = get_authored_contributions(project, author, args, repodir)
+            commits = parser.get_authored_contributions(author)
             if commits:
                 author.add_authored_contributions(project.name, commits)
 
-            others = get_other_contributions(project, author, args, repodir)
+            others = parser.get_other_contributions(author)
             if others:
                 author.add_other_contributions(project.name, others)
 
