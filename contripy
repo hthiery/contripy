@@ -202,12 +202,6 @@ def dump_json(outfile, authors, projects, cfg, args):
         } for project in projects
     }
 
-    d = {
-        'title': 'Open Source Contribution',
-        'author': 'Heiko Thiery',
-        'email': 'heiko.thiery@kontron.com',
-    }
-
     final = {
         'period': {
             'start': args.period_start,
@@ -215,7 +209,7 @@ def dump_json(outfile, authors, projects, cfg, args):
         },
         'authors': a,
         'projects': p,
-        'document': d
+        'document': cfg['document']
     }
 
     # create folder
