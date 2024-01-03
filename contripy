@@ -310,7 +310,8 @@ def main():
             if others:
                 author.add_other_contributions(project.name, others)
 
-            print('{}/{}'.format(len(commits), len(others)))
+            if not (commits is None or others is None):
+                print('{}/{}'.format(len(commits), len(others) if others else 0))
 
     dump_json(args.outfile, authors, projects, cfg, args)
 
