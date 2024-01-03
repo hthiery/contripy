@@ -36,6 +36,14 @@ class Project(object):
         else:
             self.branch = 'master'
 
+        if self.giturl.startswith("https://github.com/"):
+            repo = self.giturl.split("/")[-1]
+            owner = self.giturl[len("https://github.com/"):-(len(repo)+1)]
+            self.repo = {
+                "name": repo,
+                "owner": owner
+            }
+
 
 class Author(object):
     def __init__(self, name, cfg):
