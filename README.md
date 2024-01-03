@@ -1,18 +1,22 @@
-# contribution
+# Collecting Contributions
 
 This is a set of python scripts that collect contributions by author and
 generates a report with asciidoctor.
 
 ## Requirements
 
+For contripy script:
+
 * git
+* python3-yaml
+
+For report script:
+
 * asciidoctor
 * ruby-asciidoctor-pdf
-* python3-yaml
 * python3-dateutil
 
-
-## config
+## Config Format
 
 The config is in YAML format.
 
