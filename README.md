@@ -7,14 +7,23 @@ generates a report with asciidoctor.
 
 For contripy script:
 
-* git
-* python3-yaml
+* envyaml (Python)
+* python-dotenv (Python)
 
-For report script:
+Additionally when using the Git parser:
+
+* git
+
+Additionally when using the GitHub parser:
+
+* python-graphql-client (Python)
+* requests (Python)
+
+Additionally when using the report script:
 
 * asciidoctor
 * ruby-asciidoctor-pdf
-* python3-dateutil
+* python3-dateutil (Python)
 
 ## Config Format
 
