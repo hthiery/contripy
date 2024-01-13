@@ -100,7 +100,11 @@ def main():
             except KeyError:
                 print("Specifying parser.github.token in config is required for GitHub parser!")
                 sys.exit(1)
-            parser = GitHubContributionParser(project, args, token)
+            try:
+                parser = GitHubContributionParser(project, args, token)
+            except NameError:
+                print("GitHub parser not available, skipping project {}".format(project.name))
+                continue
         else:
             print(f"Invalid parser { project.parser }")
             sys.exit(1)
