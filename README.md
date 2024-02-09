@@ -7,14 +7,23 @@ generates a report with asciidoctor.
 
 For contripy script:
 
-* git
-* python3-yaml
+* envyaml (Python)
+* python-dotenv (Python)
 
-For report script:
+Additionally when using the Git parser:
+
+* git
+
+Additionally when using the GitHub parser:
+
+* python-graphql-client (Python)
+* requests (Python)
+
+Additionally when using the report script:
 
 * asciidoctor
 * ruby-asciidoctor-pdf
-* python3-dateutil
+* python3-dateutil (Python)
 
 ## Config Format
 
@@ -49,3 +58,41 @@ authors:
 	  - <EMAIL#n>
 
 ```
+
+## Parsers
+
+The following contribution parsers are available.
+
+### Git Parser
+
+The Git parser is the default and uses the local `git` CLI to clone the
+repository and extract all the contributions by running `git log`. It can
+be explicitly selected by using `parser: git` in the project config.
+
+### GitHub Parser
+
+The GitHub parser uses the GitHub GraphQL API to collect contributions for a
+project without the need to do a full clone. Please note that it can only fetch
+"authored" contributions and not "other" contributions.
+
+Further the GitHub parser can be used to update the project description from
+the description that is used in the GitHub project. This happens automatically
+if the config doesn't specify a value for `description`.
+
+The parser requires a GitHub API token in the config. Instead of adding the
+token to the config it can be passed via environment variable or `.env` file.
+
+#### config.yml
+
+```yaml
+parser:
+  github:
+    token: ${GITHUB_APITOKEN}
+```
+
+#### .env
+
+```
+GITHUB_APITOKEN=<token>
+```
+
