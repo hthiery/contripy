@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import argparse
 import json
 import os
@@ -10,8 +8,8 @@ from datetime import datetime
 from dotenv import load_dotenv
 from envyaml import EnvYAML
 
-from lib.parsers import *
-from lib.models import Author, Project
+from .lib.parsers import *
+from .lib.models import Author, Project
 
 def dump_json(outfile, authors, projects, cfg, args):
     a = {
@@ -67,7 +65,7 @@ def parse_args():
     return args
 
 
-def main():
+def run():
     load_dotenv()
     authors = list()
     projects = list()
@@ -131,8 +129,3 @@ def main():
                 print('{}/{}'.format(len(commits), len(others) if others else 0))
 
     dump_json(args.outfile, authors, projects, cfg, args)
-
-
-if __name__ == '__main__':
-
-    main()
