@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools >= 77.0.3"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "contripy"
+version = "1.0.0"
+description = "A tool to collect FOSS contribution data"
+authors = [{name = "Heiko Thiery", email = "heiko@thiery.it"}]
+license = "MIT"
+readme = "README.md"
+requires-python = ">= 3.8"
+dependencies = [
+    "dotenv",
+    "envyaml",
+    "python-dateutil",
+    "python-graphql-client",
+    "requests",
+]
+
+[project.scripts]
+contripy = "contripy:run"
