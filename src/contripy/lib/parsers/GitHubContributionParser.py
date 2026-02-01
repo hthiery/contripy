@@ -10,13 +10,9 @@ class GitHubContributionParser(ContributionParser):
         self.client = GraphqlClient(endpoint="https://api.github.com/graphql")
         self.token = token
 
-    def _get_authored_contributions(self, author, start, end):
-        commits = list()
-        has_next_page = True
-        after_cursor = None
+    def _construct_query(self, author, start, end, cursor=None):
         emails_string = str(author.emails).replace('\'', '\"')
-
-        query = f"""
+        return f"""
         query {{
             repository(
                 name: "{ self.project.repo['name'] }"
@@ -27,7 +23,7 @@ class GitHubContributionParser(ContributionParser):
                     ... on Commit {{
                     history(
                         author: {{ emails: { emails_string } }}
-                        after: { after_cursor if after_cursor else "null" }
+                        after: { f"\"{cursor}\"" if cursor else "null" }
                         since: "{ start.isoformat() }"
                         until: "{ end.isoformat() }"
                     ) {{
@@ -54,13 +50,21 @@ class GitHubContributionParser(ContributionParser):
         }}
         """
 
+    def _get_authored_contributions(self, author, start, end):
+        commits = list()
+        has_next_page = True
+        after_cursor = None
+
         while has_next_page:
+            query = self._construct_query(author, start, end, after_cursor)
             data = self.client.execute(
                 query=query,
                 headers={"Authorization": "Bearer {}".format(self.token)},
             )
 
-            history = data["data"]["repository"]["defaultBranchRef"]["target"]["history"]
+            history = data["data"]["repository"]["defaultBranchRef"]["target"][
+                "history"
+            ]
 
             for contribution in history["nodes"]:
                 commit = {
